@@ -49,8 +49,18 @@ string generatePassword(int length) {
     return password;
 }
 
+// Checks if a user already exists
+bool userExists(const string& username) {
+    ifstream userFile(username + "_users.txt");
+    return userFile.good();
+}
+
 // Adds a new user
 void addUser(const string& username, const string& password) {
+    if (userExists(username)) {
+        cout << "Error: Username already exists." << endl;
+        return;
+    }
     ofstream userFile(username + "_users.txt");
     if (userFile.is_open()) {
         userFile << encryptPassword(password) << endl;
