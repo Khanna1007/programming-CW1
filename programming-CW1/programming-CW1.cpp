@@ -38,17 +38,6 @@ string decryptPassword(string password) {
     return decryptedPassword;
 }
 
-// Generates a random password
-string generatePassword(int length) {
-    string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+{}[]|;:,.<>?";
-    string password = "";
-    srand(time(nullptr)); // Initialize random seed
-    for (int i = 0; i < length; i++) {
-        password += characters[rand() % characters.length()];
-    }
-    return password;
-}
-
 // Checks if a user already exists
 bool userExists(const string& username) {
     ifstream userFile(username + "_users.txt");
@@ -88,11 +77,11 @@ bool authenticateUser(const string& username, const string& password) {
 }
 
 // Adds a new password for the currently logged-in user
-void addPassword(const string& website, const string& password) {
+void addPassword(const string& website, const string& username, const string& password) {
     if (!loggedInUser.empty()) {
         ofstream passFile(loggedInUser + "_passwords.txt", ios::app);
         if (passFile.is_open()) {
-            passFile << encryptPassword(website) << ":" << encryptPassword(password) << endl;
+            passFile << encryptPassword(website) << ":" << encryptPassword(username) << ":" << encryptPassword(password) << endl;
             passFile.close();
             cout << "Password added successfully." << endl;
         }
@@ -102,8 +91,20 @@ void addPassword(const string& website, const string& password) {
     }
 }
 
+// Generates a random password
+string generatePassword(int length) {
+    string characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+{}[]|;:,.<>?";
+    string password = "";
+    srand(time(nullptr)); // Initialize random seed
+    for (int i = 0; i < length; i++) {
+        password += characters[rand() % characters.length()];
+    }
+    return password;
+}
+
 // Retrieves a password for the currently logged-in user
-string retrievePassword(const string& website) {
+
+string retrievePassword(const string& website, const string& username) {
     if (!loggedInUser.empty()) {
         ifstream passFile(loggedInUser + "_passwords.txt");
         if (passFile.is_open()) {
@@ -111,8 +112,11 @@ string retrievePassword(const string& website) {
             while (getline(passFile, line)) {
                 size_t separator = line.find(':');
                 string encryptedWebsite = line.substr(0, separator);
-                string encryptedPassword = line.substr(separator + 1);
-                if (decryptPassword(encryptedWebsite) == website) {
+                string remaining = line.substr(separator + 1);
+                size_t secondSeparator = remaining.find(':');
+                string encryptedUsername = remaining.substr(0, secondSeparator);
+                string encryptedPassword = remaining.substr(secondSeparator + 1);
+                if (decryptPassword(encryptedWebsite) == website && decryptPassword(encryptedUsername) == username) {
                     passFile.close();
                     return decryptPassword(encryptedPassword);
                 }
@@ -174,8 +178,9 @@ void listPasswords() {
                 size_t separator = line.find(':');
                 string encryptedWebsite = line.substr(0, separator);
                 string encryptedPassword = line.substr(separator + 1);
-                cout << "Website: " << decryptPassword(encryptedWebsite)
-                    << ", Password: " << decryptPassword(encryptedPassword) << endl;
+                cout << "Website: " << decryptPassword(encryptedWebsite);
+                cout << "Username: " << loggedInUser << endl; // Output username
+                cout << ", Password: " << decryptPassword(encryptedPassword) << endl;
                 hasPasswords = true;
             }
             if (!hasPasswords) {
@@ -220,22 +225,31 @@ int main() {
                     case 1: // Add a new password
                         cout << "Enter the website: ";
                         cin >> website;
+                        cout << "Enter the username: ";
+                        cin >> username;
                         cout << "Enter the password: ";
                         cin >> password;
-                        addPassword(website, password);
+                        addPassword(website, username, password);
                         break;
+
                     case 2: // Generate a password
-                        cout << "Generated password: " << generatePassword(10) << endl;
+                        int length;
+                        cout << "Enter the number of characters for the password: ";
+                        cin >> length;
+                        password = generatePassword(length);
+                        cout << "Generated password: " << password << endl;
                         break;
                     case 3: // Retrieve a password
                         cout << "Enter the website: ";
                         cin >> website;
-                        password = retrievePassword(website);
+                        cout << "Enter the username: ";
+                        cin >> username;
+                        password = retrievePassword(website, username);
                         if (!password.empty()) {
                             cout << "Password: " << password << endl;
                         }
                         else {
-                            cout << "No password found for " << website << "." << endl;
+                            cout << "No password found for " << username << " on " << website << "." << endl;
                         }
                         break;
                     case 4: // Delete a password
