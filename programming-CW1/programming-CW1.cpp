@@ -219,7 +219,7 @@ int main() {
                 cout << "Login successful." << endl;
                 bool userSession = true;
                 while (userSession) {
-                    cout << "1. Add a new password\n2. Generate a password\n3. Retrieve a password\n4. Delete a password\n5. List all passwords\n6. Logout\nEnter your choice: ";
+                    cout << "1. Add a new password\n2. Generate a password\n3. Retrieve a password\n4. Delete a password\n5. List all passwords\n6. Logout\nEnter your choice: "; //password manager menu
                     cin >> choice;
                     switch (choice) {
                     case 1: // Add a new password
